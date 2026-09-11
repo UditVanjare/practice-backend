@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import { handleMulterError } from "./middlewares/multer.middlewares.js"
 
 const app = express()
 
@@ -16,12 +17,15 @@ app.use(express.static("public"))
 app.use(cookieParser())
 
 
+
 // Routes import
 import userRouter from './routes/user.routes.js'
 
 
 // Routes declaration
 app.use("/api/v1/users", userRouter)
+
+app.use(handleMulterError)
 
 
 export { app } 

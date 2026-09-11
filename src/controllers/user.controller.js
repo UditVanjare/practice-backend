@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from '../models/user.model.js'
 import { uplodeOnCloudinary } from "../utils/cloudinary.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js" 
 
 const registerUser = asyncHandler( async (req , res)=> {
    // get user details from fronted
@@ -17,7 +17,6 @@ const registerUser = asyncHandler( async (req , res)=> {
 
 // get user details from fronted
    const {fullName , email,username,password}= req.body
-   console.log(fullName , email,username,password)
 
 // validation - not empty
    if([fullName , email,username,password].some((field) => field?.trim() ==="")
@@ -26,25 +25,31 @@ const registerUser = asyncHandler( async (req , res)=> {
     }
 
 // check if user already exists:(username or email)
-    const existsedUser = User.findOne({
+    const existsedUser = await User.findOne({
         $or : [{ username }, { email }]
      })
     if (existsedUser) {
         throw new ApiError(409,"User already exists ")
     }
 
-// check for images,check for avatar in local storage
-    const avatarLocalPath =  req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path; 
-    if (!avatarLocalPath) {
-        throw new ApiError(400,"Avatar file is  required ")
+// Read image files from the multipart request.
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage?.[0]?.path; 
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
     }
 
-// uplode them to cloudinary (check for avatar saved or not in cloudinary)
+    if (!avatarLocalPath) {
+        throw new ApiError(420, "Avatar file is required in multer")
+    }
+
+// Upload the required avatar and optional cover image.
     const avatar = await uplodeOnCloudinary(avatarLocalPath)
     const coverImage = await uplodeOnCloudinary(coverImageLocalPath)
+
     if (!avatar) {
-        throw new ApiError(400,"Avatar file is  required ")
+        throw new ApiError(400, "Avatar file is required to uplode")
     }
 
 // create user object - create entry in db
@@ -66,11 +71,10 @@ const registerUser = asyncHandler( async (req , res)=> {
     if (!createdUser) {
         throw new ApiError(500,"something went wrong when registering the user")
         }
+        // return response
+        return res.status(201).json(
+            new ApiResponse(200,createdUser,"User registered successfully")
+        )
     })
-
-// return response
-    return res.status(201).json(
-        new ApiResponse(200,createdUser,"User registered successfully")
-    )
 
 export {registerUser}
