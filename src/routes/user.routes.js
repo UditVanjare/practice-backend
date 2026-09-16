@@ -6,8 +6,7 @@ import { verifyJWT } from "../middlewares/auth.middlewares.js";
 const router = Router()
 
 
-router.route("/register").post(
-    
+router.route("/register").post(  
         // middleware to store file in multer storage
         upload.fields([
             {
@@ -21,7 +20,6 @@ router.route("/register").post(
     // calling register controller 
     registerUser
 )
-
 router.route("/login").post(loginUser)
 
 
