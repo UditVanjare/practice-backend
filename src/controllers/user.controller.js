@@ -48,7 +48,7 @@ const registerUser = asyncHandler( async (req , res)=> {
         $or : [{ username }, { email }]
      })
     if (existsedUser) {
-        throw new ApiError(409,"User already exists ")
+        throw new ApiError(409," User already exists ")
     }
 
 // Read image files from the multipart request.
@@ -274,28 +274,33 @@ const updateAccount = asyncHandler( async (req,res)=>{
 })
 
 const updateUserAvatar = asyncHandler( async (req,res)=>{
-    const avatarLocalPath = req.body.file?.path
+    const avatarLocalPath = req.file?.path
 
     if(!avatarLocalPath){
         new ApiError(400,"Avatar file is missing")
     }
 
-    const avatar = await uplodeOnCloudinary(avatarLocalPath )
+    const avatar = await uplodeOnCloudinary(avatarLocalPath)
 
     if (!avatar.url) {
         throw new ApiError(400,"error accure while uploding file on cloudinary")
     }
+    
+    console.log(avatar.url)
 
-    const user = User.findByIdAndUpdate(
-        body.user?._id,
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
         { 
-            $set :{ 
-                avatar : avatar.url
+            $set:{ 
+                avatar : avatar.url,
             }
         },
         {new : true}
     )
     .select("-password")
+
+    //todo: delete old image from cloudinary
+
     return res
         .status(200) 
         .json( new ApiResponse(
@@ -305,8 +310,10 @@ const updateUserAvatar = asyncHandler( async (req,res)=>{
         ))
 })
 
-const updateUserCoverImage = asyncHandler(async(req,res)=>{
-    const localCoverImage =  req.body.file?.path
+const updateUserCoverImage = asyncHandler( async (req,res)=>{
+    const localCoverImage =  req.file?.path
+    console.log(req.file)
+    console.log(localCoverImage)
 
     if (!localCoverImage) {
         throw new ApiError(400,"cover image is missing")
@@ -327,6 +334,8 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
         },
         {new : true} 
     ).select("-password")
+
+    //todo: delete old image from cloudinary
 
     return res
         .status(200)
