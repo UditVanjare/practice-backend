@@ -25,13 +25,14 @@ router.route("/login").post(loginUser)
 
 //secured routes
 router.route("/logout").post(verifyJWT,logoutUser)
-router.route("/refreshtoken").post(refreshAccessToken)
+router.route("/refresh-token").post(refreshAccessToken)
 
-router.route("/changeCurrentPassword").post(verifyJWT,changeCurrentPassword)
-router.route("/getCurrentUser").post(verifyJWT,getCurrentUser)
-router.route("/updateAccount").post(verifyJWT,updateAccount)
-router.route("/updateUserAvatar").post(verifyJWT,upload.single("avatar"),updateUserAvatar)
-router.route("/updateUserCoverImage").post(verifyJWT,upload.single("coverImage"),updateUserCoverImage)
-
+router.route("/change-current-password").post(verifyJWT,changeCurrentPassword)
+router.route("/get-current-user").get(verifyJWT,getCurrentUser)
+router.route("/update-account").patch(verifyJWT,updateAccount)
+router.route("/update-user-avatar").patch(verifyJWT,upload.single("avatar"),updateUserAvatar)
+router.route("/update-user-cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCoverImage)
+router.route("/c/:username").get(verifyJWT,getUserChannelProfile)
+router.route("/history").get(verifyJWT,getWatchHistory)
 
 export default router 
