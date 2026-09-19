@@ -347,7 +347,6 @@ const updateUserCoverImage = asyncHandler( async (req,res)=>{
         ))
 })
 
-
 const getUserChannelProfile = asyncHandler(async (req, res)=>{
     const {username} = req.params
     if(!username?.trim){
@@ -355,76 +354,87 @@ const getUserChannelProfile = asyncHandler(async (req, res)=>{
     }
 
     const channel = await User.aggregate([
-        {
-            $match :{
-                username : username.toLowerCase()
-            }
-        },
-        {
-            $lookup : {
-                 from : "subscriptions",
-                 localField : "_id",
-                 foreignField : "channel",
-                 as : "subscribers"
-            }
-        },
-        {
-             $lookup : {
-                 from : "subscriber",
-                 localField : "_id",
-                 foreignField : "channel",
-                 as : "subscriberedTo"
-            }
-        },
-        {
-            $addFields : {
-                subscriberCount : {
-                    $size : "$subscribers"
-            }
+    {
+        $match: {
+            username: username.toLowerCase()
+        }
+    },
+
+    {
+        $lookup: {
+            from: "subscriptions",
+            localField: "_id",
+            foreignField: "channel",
+            as: "subscribers"
+        }
+    },
+
+    {
+        $lookup: {
+            from: "subscriptions",
+            localField: "_id",
+            foreignField: "subscriber",
+            as: "subscribedTo"
+        }
+    },
+
+    {
+        $addFields: {
+            subscriberCount: {
+                $size: "$subscribers"
             },
-            $addFields :{
-                channelSubscribedToCount : {
-                    $size : "$subscriberedTo"
-                } 
+
+            channelSubscribedToCount: {
+                $size: "$subscribedTo"
             },
-            isSubscribed :{
-                $cond :{
-                    if: {$in :[req.user?._id,"$subscribers.subscriber"]},
-                    then : true,
-                    else : false
+
+            isSubscribed: {
+                $cond: {
+                    if: {
+                        $in: [
+                            req.user?._id,
+                            "$subscribers.subscriber"
+                        ]
+                    },
+                    then: true,
+                    else: false
                 }
             }
-        },
-        {
-            $project : {
-                fullName : 1,
-                username : 1,
-                subscriberCount : 1,
-                channelSubscribedToCount : 1,
-                isSubscribed : 1,
-                avatar : 1,
-                coverImage : 1,
-                email :1,
-                createdAt : 1
-            }
         }
-    ])
-    console.log(channel) 
+    },
+
+    {
+        $project: {
+            fullName: 1,
+            username: 1,
+            subscriberCount: 1,
+            channelSubscribedToCount: 1,
+            isSubscribed: 1,
+            avatar: 1,
+            coverImage: 1,
+            email: 1,
+            createdAt: 1
+        }
+    }
+]);
+
+console.log(channel);
 
     if (!channel?.length) {
         throw new ApiError(404," channel does not exist ")
     }
 
     return res.status(200)
-        .json(new ApiResponse(
-            200,
-            channel[0],
-            "fetched successfuly "
-        ))
-})  
+    .json(new ApiResponse(
+        200,
+        channel[0],
+        "fetched successfuly "
+    ))
+})
 
 const getWatchHistory = asyncHandler ( async (req ,res )=>{
-     const user = User.aggregate([
+    console.log("req.user:", req.user);
+     const user = await User.aggregate([
         {
             $match : {
                 _id : new mongoose.Types.ObjectId(req.user._id)
@@ -465,11 +475,13 @@ const getWatchHistory = asyncHandler ( async (req ,res )=>{
         }
      ])
 
+console.log("user:", user);
+
     return res
         .status(200)
         .json(new ApiResponse(
             200,
-            user[0].watchHistory,
+            user[0].watchHistory ,
             "Watch history fetched successfully" 
         ))
 })
